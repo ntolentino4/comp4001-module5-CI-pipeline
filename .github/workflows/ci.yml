@@ -1,0 +1,46 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify Docker
+        run: docker --version
+
+      - name: Build Docker Images
+        run: docker compose build
+
+      - name: Start Containers
+        run: docker compose up -d
+
+      - name: Wait for services to start
+        run: sleep 10
+
+      - name: Check App1 Health
+        run: curl --fail http://localhost:3001 || exit 1
+
+      - name: Check App2 Health
+        run: curl --fail http://localhost:3002 || exit 1
+
+      - name: Check App3 Health
+        run: curl --fail http://localhost:3003 || exit 1
+
+      - name: Check Nginx Proxy
+        run: curl --fail http://localhost:8080 || exit 1
+
+      - name: Stop Containers
+        if: always()
+        run: docker compose down
